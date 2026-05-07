@@ -1,74 +1,93 @@
+---
+title: AssistFlowAI
+emoji: 🤖
+colorFrom: blue
+colorTo: purple
+sdk: streamlit
+sdk_version: "1.45.1"
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # 🤖 SOP Agentic AI System
 
 An end-to-end agentic AI pipeline that transforms digital advertising and customer support SOPs into structured, testable workflows — with automated decision-making, prompt-driven execution, and continuous QA validation.
 
 ---
 
-## 🏗️ Architecture Overview
+# 🏗️ Architecture Overview
 
-```
+```text
 React/Streamlit UI
        ↓
 n8n Webhook (Entry Point)
        ↓
 ─────────────── INGESTION PIPELINE ───────────────
-1.  Receive SOP document
-2.  Fetch Prompt Template     (MongoDB)
-3.  Call Gemini API           (HTTP Node)
-4.  Parse Structured Output   (Code Node)
-5.  Store Workflow            (MongoDB)
+1. Receive SOP document
+2. Fetch Prompt Template     (MongoDB)
+3. Call Gemini API           (HTTP Node)
+4. Parse Structured Output   (Code Node)
+5. Store Workflow            (MongoDB)
+
 ─────────────── EXECUTION PIPELINE ───────────────
-6.  Receive User Query
-7.  Extract Variables         (Gemini AI)
-8.  Apply Rule Engine         (Code Node)
-9.  Generate AI Response      (Gemini AI)
-10. QA Validation             (Gemini AI)
-11. Log Everything            (MongoDB)
+6. Receive User Query
+7. Extract Variables         (Gemini AI)
+8. Apply Rule Engine         (Code Node)
+9. Generate AI Response      (Gemini AI)
+10. QA Validation            (Gemini AI)
+11. Log Everything           (MongoDB)
 ──────────────────────────────────────────────────
 ```
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Frontend UI | Streamlit (Python) |
 | Workflow Engine | n8n Cloud |
-| AI Model | Google Gemini 2.5 Flash |
+| AI Model | Google Gemini 1.5 Flash |
 | Database | MongoDB Atlas |
-| Hosting | Streamlit Cloud |
+| Hosting | Hugging Face Spaces |
 
 ---
 
-## 📁 Project Structure
+# 📁 Project Structure
 
-```
+```text
 sop-agent/
 ├── app.py              # Streamlit frontend — all 4 pages
 ├── requirements.txt    # Python dependencies
 ├── .gitignore          # Files to exclude from Git
-└── README.md           # This file
+└── README.md           # Documentation
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+# ⚙️ Setup Instructions
 
-### 1. Clone the Repository
+## 1. Clone the Repository
+
 ```bash
 git clone https://github.com/YOUR_USERNAME/sop-agent.git
 cd sop-agent
 ```
 
-### 2. Install Dependencies
+---
+
+## 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+---
 
-Open `app.py` and update these values at the top:
+## 3. Configure Environment Variables
+
+Update these values inside `app.py` or `.env`:
 
 ```python
 INGEST_WEBHOOK  = "https://YOUR-NAME.app.n8n.cloud/webhook/sop-agent"
@@ -76,20 +95,34 @@ EXECUTE_WEBHOOK = "https://YOUR-NAME.app.n8n.cloud/webhook/sop-execute"
 MONGO_URI       = "mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/"
 ```
 
-### 4. Run Locally
+---
+
+## 4. Run Locally
+
 ```bash
 streamlit run app.py
 ```
 
-Opens at `http://localhost:8501`
+Application opens at:
+
+```text
+http://localhost:8501
+```
 
 ---
 
-## 🗄️ MongoDB Collections
+# 🗄️ MongoDB Collections
 
-### `sop_agent_db` database with 3 collections:
+## Database: `sop_agent_db`
 
-**`prompt_templates`** — AI prompt blueprints
+Contains 3 collections:
+
+---
+
+## `prompt_templates`
+
+Stores reusable AI prompt blueprints.
+
 ```json
 {
   "_id": "tmpl_cs_sop_v1",
@@ -100,58 +133,114 @@ Opens at `http://localhost:8501`
 }
 ```
 
-**`workflows`** — Gemini-parsed structured SOPs
+---
+
+## `workflows`
+
+Stores Gemini-generated structured SOP workflows.
+
 ```json
 {
   "title": "Billing Complaint Resolution",
   "category": "Customer Service",
-  "steps": [...],
-  "escalation_rules": [...],
+  "steps": [],
+  "escalation_rules": [],
   "tags": ["billing", "refund"],
   "status": "active"
 }
 ```
 
-**`logs`** — Full audit trail of every interaction
+---
+
+## `logs`
+
+Stores execution logs and QA results.
+
 ```json
 {
   "session_id": "sess_001",
   "user_query": "I was charged twice...",
   "ai_response": "I understand your frustration...",
-  "qa_result": { "pass": true, "score": 0.95 },
-  "rule_engine_result": { "route": "auto_respond" },
+  "qa_result": {
+    "pass": true,
+    "score": 0.95
+  },
+  "rule_engine_result": {
+    "route": "auto_respond"
+  },
   "final_status": "sent"
 }
 ```
 
 ---
 
-## 🔄 n8n Workflows
+# 🔄 n8n Workflows
 
-### Ingestion Pipeline (`POST /webhook/sop-agent`)
-Converts raw SOP text into structured JSON workflows using Gemini AI.
+## Ingestion Pipeline (`POST /webhook/sop-agent`)
 
-**Nodes:**
-```
-Webhook → MongoDB Find → Code (build prompt) → HTTP Request (Gemini)
-→ Code (parse) → MongoDB Insert → Respond to Webhook
-```
+Converts raw SOP text into structured workflows using Gemini AI.
 
-### Execution Pipeline (`POST /webhook/sop-execute`)
-Processes user queries end-to-end with AI response and QA validation.
+### Nodes
 
-**Nodes:**
-```
-Webhook → MongoDB Find → Code (extract) → HTTP Request (Gemini)
-→ Code (parse vars) → Code (rule engine) → Code (response prompt)
-→ HTTP Request (Gemini) → Code (parse response) → Code (QA prompt)
-→ HTTP Request (Gemini) → Code (parse QA) → Code (build log)
-→ MongoDB Insert → Respond to Webhook
+```text
+Webhook
+↓
+MongoDB Find
+↓
+Code (Build Prompt)
+↓
+HTTP Request (Gemini)
+↓
+Code (Parse Response)
+↓
+MongoDB Insert
+↓
+Respond to Webhook
 ```
 
 ---
 
-## 🚦 Rule Engine Logic
+## Execution Pipeline (`POST /webhook/sop-execute`)
+
+Processes customer queries end-to-end.
+
+### Nodes
+
+```text
+Webhook
+↓
+MongoDB Find
+↓
+Code (Extract Variables)
+↓
+HTTP Request (Gemini)
+↓
+Code (Parse Variables)
+↓
+Code (Rule Engine)
+↓
+Code (Build Response Prompt)
+↓
+HTTP Request (Gemini)
+↓
+Code (Parse Response)
+↓
+Code (Build QA Prompt)
+↓
+HTTP Request (Gemini)
+↓
+Code (Parse QA)
+↓
+Code (Build Logs)
+↓
+MongoDB Insert
+↓
+Respond to Webhook
+```
+
+---
+
+# 🚦 Rule Engine Logic
 
 | Condition | Route | Priority |
 |---|---|---|
@@ -163,63 +252,68 @@ Webhook → MongoDB Find → Code (extract) → HTTP Request (Gemini)
 
 ---
 
-## 📊 Streamlit Pages
+# 📊 Streamlit Pages
 
 | Page | Description |
 |---|---|
-| 🏠 Home | System status overview |
-| 📄 SOP Uploader | Upload raw SOPs → Gemini structures them |
-| 💬 Query Interface | Test customer queries → see AI responses |
-| 📊 Logs Dashboard | Live audit trail from MongoDB |
+| 🏠 Home | System overview |
+| 📄 SOP Uploader | Upload SOP documents |
+| 💬 Query Interface | Test customer support queries |
+| 📊 Logs Dashboard | View MongoDB execution logs |
 
 ---
 
-## 🚀 Deploy to Streamlit Cloud
+# 🚀 Deploy to Hugging Face Spaces
 
-1. Push this repo to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repo
-4. Set main file as `app.py`
-5. Click **Deploy**
+## 1. Push Repository
 
-Your app will be live at:
-```
-https://YOUR_USERNAME-sop-agent.streamlit.app
+```bash
+git push huggingface main
 ```
 
 ---
 
-## 📋 Sample SOP — Customer Support
+## 2. Hugging Face Automatically
 
+- Detects Streamlit
+- Installs dependencies
+- Launches app
+
+---
+
+## 3. Live URL
+
+```text
+https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME
 ```
+
+---
+
+# 📋 Sample SOP — Customer Support
+
+```text
 Billing Dispute Resolution SOP
 
-Step 1: Greet the customer and acknowledge their concern with empathy.
-Step 2: Verify customer identity — ask for email and last 4 digits of card.
-Step 3: Check billing history for duplicate charges within the last 30 days.
-Step 4: If duplicate found within 30 days — process full refund immediately.
-Step 5: If charge older than 30 days — escalate to billing manager.
-Step 6: If charge exceeds $500 — escalate to senior billing specialist.
-Step 7: Log the interaction and close the ticket.
-
-Escalation Rules:
-- Escalate if refund > $500
-- Escalate if customer contacted support more than 3 times
-- Escalate if chargeback already filed
+Step 1: Greet customer empathetically.
+Step 2: Verify identity.
+Step 3: Check duplicate charges.
+Step 4: Refund if within 30 days.
+Step 5: Escalate if amount exceeds $500.
+Step 6: Log interaction.
 ```
 
 ---
 
-## 🔑 API Keys Required
+# 🔑 API Keys Required
 
-| Service | Where to get |
+| Service | Source |
 |---|---|
-| Gemini API Key | [aistudio.google.com](https://aistudio.google.com) |
-| MongoDB URI | [cloud.mongodb.com](https://cloud.mongodb.com) |
-| n8n Cloud | [app.n8n.cloud](https://app.n8n.cloud) |
+| Gemini API Key | https://aistudio.google.com |
+| MongoDB Atlas URI | https://cloud.mongodb.com |
+| n8n Cloud | https://app.n8n.cloud |
 
 ---
 
-## 📄 License
+# 📄 License
 
-MIT License — free to use, modify and distribute.
+MIT License — free to use, modify, and distribute.
